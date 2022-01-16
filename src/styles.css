@@ -15,17 +15,10 @@
 .tile {
   border: 2px solid #eee;
   font-size: 1.5rem;
+  line-height: 3rem;
   height: 3rem;
   padding: 1rem;
   text-align: center;
   text-transform: uppercase;
   width: 3rem;
-}
-
-.tile:focus {
-  outline: none;
-}
-
-.tile:focus:not(:disabled) {
-  border-color: #44f;
 }

@@ -1,57 +1,106 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useMemo } from "react";
+import { useKey } from "react-use";
 import { Board } from "./components/Board";
-import { FIVE_LETTER_WORDS } from "./corpus";
+import { Button } from "./components/Button";
 import "./styles.css";
+import {
+  chooseWord,
+  emptyBoard,
+  isLetterKey,
+  STATE,
+  useStateAndRef
+} from "./util";
 
 export default function App() {
-  const [status, setStatus] = useState("WAIT");
-  const [word, setWord] = useState("");
-  const [activeRow, setActiveRow] = useState(-1);
+  const [status, statusRef, setStatus] = useStateAndRef(STATE.PLAY);
+  const startingWord = useMemo(chooseWord, []);
+  const [word, wordRef, setWord] = useStateAndRef(startingWord);
+  const [board, boardRef, setBoard] = useStateAndRef(emptyBoard());
 
-  const formRef = useRef();
+  const [activeRow, activeRowRef, setActiveRow] = useStateAndRef(0);
+  const [, activeTileRef, setActiveTile] = useStateAndRef(0);
 
   const startGame = useCallback(() => {
-    const newWord = FIVE_LETTER_WORDS.sort(() => Math.random() - 0.5)
-      .pop()
-      .toLowerCase();
-    setWord(newWord);
+    setBoard(emptyBoard());
+    setWord(chooseWord());
     setActiveRow(0);
-    setStatus("PLAY");
-  }, []);
+    setActiveTile(0);
+    setStatus(STATE.PLAY);
+  }, [setActiveRow, setActiveTile, setBoard, setStatus, setWord]);
 
-  const makeGuess = useCallback(
-    (guess) => {
-      if (guess.length !== 5) {
-        return;
+  const typeForward = useCallback(
+    (event) => {
+      if (
+        statusRef.current === STATE.PLAY &&
+        activeRowRef.current < 6 &&
+        activeTileRef.current < 5
+      ) {
+        setBoard((board) => {
+          const newBoard = board.map((row) => [...row]);
+          newBoard[activeRowRef.current][activeTileRef.current] = event.key;
+          return newBoard;
+        });
+
+        setActiveTile((i) => i + 1);
       }
-
-      if (guess === word) {
-        console.log("Winner!");
-        setStatus("WON");
-        setActiveRow(6);
-        return;
-      }
-
-      if (activeRow === 5) {
-        setStatus("LOST");
-        console.log("Sorry");
-      }
-
-      setActiveRow((row) => row + 1);
     },
-    [activeRow, word]
+    [activeRowRef, activeTileRef, setActiveTile, setBoard, statusRef]
   );
+
+  const typeBackward = useCallback(
+    (event) => {
+      if (
+        statusRef.current === STATE.PLAY &&
+        activeRowRef.current < 6 &&
+        activeTileRef.current > 0
+      ) {
+        setBoard((board) => {
+          const newBoard = board.map((row) => [...row]);
+          newBoard[activeRowRef.current][activeTileRef.current - 1] = "";
+          return newBoard;
+        });
+
+        setActiveTile((i) => i - 1);
+      }
+    },
+    [activeRowRef, activeTileRef, setActiveTile, setBoard, statusRef]
+  );
+
+  const submitGuess = useCallback(() => {
+    if (statusRef.current === STATE.PLAY && activeTileRef.current === 5) {
+      const guess = boardRef.current[activeRowRef.current].join("");
+
+      if (guess === wordRef.current) {
+        setStatus(STATE.WON);
+      } else if (activeRowRef.current === 5) {
+        setStatus(STATE.LOST);
+      } else {
+        setActiveRow((i) => i + 1);
+        setActiveTile(0);
+      }
+    }
+  }, [
+    activeRowRef,
+    activeTileRef,
+    boardRef,
+    setActiveRow,
+    setActiveTile,
+    setStatus,
+    statusRef,
+    wordRef
+  ]);
+
+  // Warning: this hook closes current state into the callback function.
+  useKey(isLetterKey, typeForward);
+  useKey("Backspace", typeBackward);
+  useKey("Enter", submitGuess);
 
   return (
     <div className="App">
       <h1>Wordle Clone for Fun</h1>
-      <form ref={formRef}>
-        <Board activeRow={activeRow} makeGuess={makeGuess} word={word} />
-      </form>
+      <Board activeRow={activeRow} board={board} status={status} word={word} />
       <p>
-        <button disabled={status === "PLAY"} onClick={startGame}>
-          Start Game
-        </button>
+        <Button status={status} startGame={startGame} />
       </p>
     </div>
   );

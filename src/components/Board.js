@@ -1,94 +1,14 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React from "react";
 
-export const Board = ({ activeRow, makeGuess, word }) => {
+export const Board = ({ activeRow, board, status, word }) => {
   return (
     <div className="board">
-      {Array(6)
-        .fill(null)
-        .map((_, index) => (
-          <Row
-            key={`row-${index}`}
-            active={activeRow === index}
-            letters="ABCDE"
-            makeGuess={makeGuess}
-            rowIndex={index}
-            word={word}
-          />
-        ))}
-    </div>
-  );
-};
-
-export const Row = ({ active, letters, makeGuess, rowIndex, word }) => {
-  const tile1 = useRef();
-  const tile2 = useRef();
-  const tile3 = useRef();
-  const tile4 = useRef();
-  const tile5 = useRef();
-
-  const tiles = useMemo(() => [tile1, tile2, tile3, tile4, tile5], [
-    tile1,
-    tile2,
-    tile3,
-    tile4,
-    tile5
-  ]);
-
-  const inputHandler = useCallback(
-    (event, index) => {
-      if (event.target.value.length > 0) {
-        tiles[Math.min(index + 1, 4)].current.focus();
-      }
-    },
-    [tiles]
-  );
-
-  const keydownHandler = useCallback(
-    (event, index) => {
-      if (event.ctrlKey || event.metaKey) {
-        return;
-      }
-
-      switch (event.key) {
-        case "Enter":
-          event.preventDefault();
-          let guess = tiles.map((tile) => tile.current.value).join("");
-          makeGuess(guess);
-          break;
-
-        case "Backspace":
-          if (event.target.value.length === 0) {
-            tiles[Math.max(index - 1, 0)].current.focus();
-          }
-          break;
-
-        case "ArrowLeft":
-          event.preventDefault();
-          tiles[Math.max(index - 1, 0)].current.focus();
-          break;
-
-        case "ArrowRight":
-          event.preventDefault();
-          tiles[Math.min(index + 1, 4)].current.focus();
-          break;
-
-        default:
-          break;
-      }
-    },
-    [makeGuess, tiles]
-  );
-
-  return (
-    <div className="row">
-      {tiles.map((ref, index) => (
-        <Tile
-          key={`${rowIndex}-${index}`}
-          disabled={!active}
-          forwardRef={ref}
-          index={index}
-          inputHandler={inputHandler}
-          keydownHandler={keydownHandler}
+      {board.map((_, index) => (
+        <Row
+          key={`row-${index}`}
+          active={activeRow === index && status === "PLAY"}
+          row={board[index]}
+          rowIndex={index}
           word={word}
         />
       ))}
@@ -96,33 +16,26 @@ export const Row = ({ active, letters, makeGuess, rowIndex, word }) => {
   );
 };
 
-export const Tile = ({
-  disabled,
-  forwardRef,
-  index,
-  inputHandler,
-  keydownHandler,
-  word
-}) => {
-  const [value, setValue] = useState("");
-  const onInput = useCallback(
-    (event) => {
-      setValue(event.target.value.toLowerCase());
-      inputHandler(event, index);
-    },
-    [index, inputHandler]
+export const Row = ({ active, row, rowIndex, word }) => {
+  return (
+    <div className="row">
+      {row.map((tile, index) => (
+        <Tile
+          key={`${rowIndex}-${index}`}
+          active={active}
+          index={index}
+          value={tile}
+          word={word}
+        />
+      ))}
+    </div>
   );
+};
 
-  const onKeydown = useCallback(
-    (event) => {
-      keydownHandler(event, index);
-    },
-    [index, keydownHandler]
-  );
-
+export const Tile = ({ active, index, word, value }) => {
   let bgColor;
 
-  if (!disabled || value === "") {
+  if (active || value === "") {
     bgColor = "transparent";
   } else if (word.charAt(index) === value) {
     bgColor = "#dfd";
@@ -133,22 +46,8 @@ export const Tile = ({
   }
 
   return (
-    <input
-      ref={forwardRef}
-      type="text"
-      className="tile"
-      disabled={disabled}
-      maxLength="1"
-      pattern="[a-zA-Z]"
-      onFocus={moveCursorToEndOnFocus}
-      onInput={onInput}
-      onKeyDown={onKeydown}
-      style={{ backgroundColor: bgColor }}
-      value={value}
-    />
+    <div className="tile" style={{ backgroundColor: bgColor }}>
+      {value}
+    </div>
   );
-};
-
-const moveCursorToEndOnFocus = (e) => {
-  e.target.selectionStart = e.target.selectionEnd = e.target.value.length;
 };

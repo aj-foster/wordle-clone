@@ -1,6 +1,6 @@
 import { STATE } from "../util";
 
-export const Button = ({ status, startGame }) => {
+export const Button = ({ status, startGame, word }) => {
   let buttonMessage;
 
   switch (status) {
@@ -13,7 +13,7 @@ export const Button = ({ status, startGame }) => {
       break;
 
     case STATE.LOST:
-      buttonMessage = "Nice Try. Play Again?";
+      buttonMessage = `The Word Was ${word}. Play Again?`;
       break;
 
     default:
@@ -21,7 +21,11 @@ export const Button = ({ status, startGame }) => {
   }
 
   return (
-    <button disabled={status === STATE.PLAY} onClick={startGame}>
+    <button
+      className="bg-slate-700 p-4 rounded text-gray-300 hover:bg-slate-600 disabled:bg-slate-900"
+      disabled={status === STATE.PLAY}
+      onClick={startGame}
+    >
       {buttonMessage}
     </button>
   );

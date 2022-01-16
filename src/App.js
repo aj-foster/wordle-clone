@@ -2,7 +2,6 @@ import React, { useCallback, useMemo } from "react";
 import { useKey } from "react-use";
 import { Board } from "./components/Board";
 import { Button } from "./components/Button";
-import "./styles.css";
 import {
   chooseWord,
   emptyBoard,
@@ -96,11 +95,11 @@ export default function App() {
   useKey("Enter", submitGuess);
 
   return (
-    <div className="App">
-      <h1>Wordle Clone for Fun</h1>
+    <div className="App text-center">
+      <h1 className="my-8 text-3xl text-gray-300">Wordle Clone for Fun</h1>
       <Board activeRow={activeRow} board={board} status={status} word={word} />
-      <p>
-        <Button status={status} startGame={startGame} />
+      <p className="my-4">
+        <Button status={status} startGame={startGame} word={word} />
       </p>
     </div>
   );
